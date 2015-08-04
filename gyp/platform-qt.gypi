@@ -20,6 +20,8 @@
         '../platform/default/string_stdlib.cpp',
         '../platform/default/thread.cpp',
         '../platform/qt/image.cpp',
+        '../platform/qt/qfilesource_p.cpp',
+        '../platform/qt/qfilesource_p.hpp',
         '../platform/qt/qmapboxgl.cpp',
         '../platform/qt/qmapboxgl_p.hpp',
       ],
