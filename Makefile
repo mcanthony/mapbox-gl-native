@@ -64,7 +64,7 @@ run-valgrind-linux: linux
 	(cd build/linux-x86_64/$(BUILDTYPE) && valgrind --leak-check=full --suppressions=../../../scripts/valgrind.sup ./mapbox-gl)
 
 .PHONY: qt run-qt
-qt: ; $(RUN) Makefile/qtapp
+qt: ; $(RUN) PLATFORM=qt Makefile/qtapp
 run-qt: qt ; (cd build/$(BUILD)-x86_64/$(BUILDTYPE) && ./qmapboxgl)
 
 .PHONY: android android-lib
