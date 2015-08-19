@@ -38,7 +38,8 @@
           '<@(nunicode_cflags)',
           '<@(opengl_cflags)',
           '<@(qt_cflags)',
-          '-Wno-error'
+          '-Wno-error',
+          '-fPIC',
         ],
         'ldflags': [
           '<@(libuv_ldflags)',

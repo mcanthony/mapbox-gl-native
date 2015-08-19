@@ -38,6 +38,7 @@
           '-Wno-c++1y-extensions',
           '-frtti',
           '-fexceptions',
+          '-fvisibility=hidden',
           '${CFLAGS}',
         ],
       }],

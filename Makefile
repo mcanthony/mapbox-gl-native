@@ -63,7 +63,8 @@ run-linux: linux ; (cd build/linux-x86_64/$(BUILDTYPE) && ./mapbox-gl)
 run-valgrind-linux: linux
 	(cd build/linux-x86_64/$(BUILDTYPE) && valgrind --leak-check=full --suppressions=../../../scripts/valgrind.sup ./mapbox-gl)
 
-.PHONY: qt run-qt
+.PHONY: qtpackage qt run-qt
+qtpackage: ; $(RUN) PLATFORM=qt HTTP=none Makefile/qtpackage
 qt: ; $(RUN) PLATFORM=qt HTTP=none Makefile/qtapp
 run-qt: qt ; (cd build/$(BUILD)-x86_64/$(BUILDTYPE) && ./qmapboxgl)
 

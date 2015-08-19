@@ -9,7 +9,7 @@ namespace util {
 
 // A list of default styles, with the first string being the URL
 // and the second being the user-visible name.
-extern const std::vector<std::pair<std::string, std::string>> defaultStyles;
+__attribute__ ((visibility ("default"))) extern const std::vector<std::pair<std::string, std::string>> defaultStyles;
 
 } // end namespace util
 } // end namespace mbgl

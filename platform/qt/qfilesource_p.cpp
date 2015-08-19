@@ -2,6 +2,7 @@
 
 #include "qsqlitecache_p.hpp"
 
+#include <mbgl/storage/http_context_base.hpp>
 #include <mbgl/util/mapbox.hpp>
 #include <mbgl/storage/request.hpp>
 #include <mbgl/storage/response.hpp>
@@ -11,6 +12,16 @@
 #include <QNetworkReply>
 #include <QScopedPointer>
 #include <QSslConfiguration>
+
+namespace mbgl {
+
+// FIXME: Not in use, needed for linking as a library.
+std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*)
+{
+    return nullptr;
+}
+
+}
 
 QFileSourcePrivate::QFileSourcePrivate()
 {
