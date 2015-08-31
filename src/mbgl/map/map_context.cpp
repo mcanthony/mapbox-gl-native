@@ -17,7 +17,6 @@
 #include <mbgl/style/style.hpp>
 
 #include <mbgl/util/gl_object_store.hpp>
-#include <mbgl/util/uv_detail.hpp>
 #include <mbgl/util/worker.hpp>
 #include <mbgl/util/texture_pool.hpp>
 #include <mbgl/util/exception.hpp>
@@ -30,16 +29,16 @@ namespace mbgl {
 MapContext::MapContext(View& view_, FileSource& fileSource, MapData& data_)
     : view(view_),
       data(data_),
-      asyncUpdate(std::make_unique<uv::async>(util::RunLoop::getLoop(), [this] { update(); })),
-      asyncInvalidate(std::make_unique<uv::async>(util::RunLoop::getLoop(), [&view_] { view_.invalidate(); })),
+      asyncUpdate([this] { update(); }),
+      asyncInvalidate([&view_] { view_.invalidate(); }),
       texturePool(std::make_unique<TexturePool>()) {
     assert(util::ThreadContext::currentlyOn(util::ThreadType::Map));
 
     util::ThreadContext::setFileSource(&fileSource);
     util::ThreadContext::setGLObjectStore(&glObjectStore);
 
-    asyncUpdate->unref();
-    asyncInvalidate->unref();
+    asyncUpdate.unref();
+    asyncInvalidate.unref();
 
     view.activate();
 }
@@ -81,14 +80,14 @@ void MapContext::pause() {
 
     view.activate();
 
-    asyncInvalidate->send();
+    asyncInvalidate.send();
 }
 
 void MapContext::triggerUpdate(const TransformState& state, const Update flags) {
     transformState = state;
     updateFlags |= flags;
 
-    asyncUpdate->send();
+    asyncUpdate.send();
 }
 
 void MapContext::setStyleURL(const std::string& url) {
@@ -139,7 +138,7 @@ void MapContext::loadStyleJSON(const std::string& json, const std::string& base)
     style->cascade();
 
     updateFlags |= Update::DefaultTransition | Update::Classes | Update::Zoom | Update::Annotations;
-    asyncUpdate->send();
+    asyncUpdate.send();
 }
 
 void MapContext::update() {
@@ -171,7 +170,7 @@ void MapContext::update() {
     style->update(transformState, *texturePool);
 
     if (data.mode == MapMode::Continuous) {
-        asyncInvalidate->send();
+        asyncInvalidate.send();
     } else if (callback && style->isLoaded()) {
         renderSync(transformState, frameData);
     }
@@ -210,7 +209,7 @@ void MapContext::renderStill(const TransformState& state, const FrameData& frame
     frameData = frame;
 
     updateFlags |= Update::RenderStill;
-    asyncUpdate->send();
+    asyncUpdate.send();
 }
 
 bool MapContext::renderSync(const TransformState& state, const FrameData& frame) {
@@ -245,12 +244,12 @@ bool MapContext::renderSync(const TransformState& state, const FrameData& frame)
 
     if (style->hasTransitions()) {
         updateFlags |= Update::Classes;
-        asyncUpdate->send();
+        asyncUpdate.send();
     }
 
     if (painter->needsAnimation()) {
         updateFlags |= Update::Repaint;
-        asyncUpdate->send();
+        asyncUpdate.send();
     }
 
     return isLoaded();
@@ -278,7 +277,7 @@ void MapContext::setSourceTileCacheSize(size_t size) {
         for (const auto &source : style->sources) {
             source->setCacheSize(sourceCacheSize);
         }
-        asyncInvalidate->send();
+        asyncInvalidate.send();
     }
 }
 
@@ -288,7 +287,7 @@ void MapContext::onLowMemory() {
     for (const auto &source : style->sources) {
         source->onLowMemory();
     }
-    asyncInvalidate->send();
+    asyncInvalidate.send();
 }
 
 void MapContext::setSprite(const std::string& name, std::shared_ptr<const SpriteImage> sprite) {
@@ -306,7 +305,7 @@ void MapContext::onTileDataChanged() {
     assert(util::ThreadContext::currentlyOn(util::ThreadType::Map));
 
     updateFlags |= Update::Repaint;
-    asyncUpdate->send();
+    asyncUpdate.send();
 }
 
 void MapContext::onResourceLoadingFailed(std::exception_ptr error) {
