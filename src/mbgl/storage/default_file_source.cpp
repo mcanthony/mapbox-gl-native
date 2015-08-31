@@ -36,10 +36,8 @@ DefaultFileSource::~DefaultFileSource() {
 }
 
 Request* DefaultFileSource::request(const Resource& resource,
-                                    uv_loop_t* l,
+                                    uv_loop_t*,
                                     Callback callback) {
-    assert(l);
-
     std::string url;
 
     switch (resource.kind) {
@@ -64,7 +62,7 @@ Request* DefaultFileSource::request(const Resource& resource,
         url = resource.url;
     }
 
-    auto req = new Request({ resource.kind, url }, l, std::move(callback));
+    auto req = new Request({ resource.kind, url }, std::move(callback));
     thread->invoke(&Impl::add, req);
     return req;
 }
