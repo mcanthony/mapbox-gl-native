@@ -108,7 +108,7 @@ void MapContext::setStyleURL(const std::string& url) {
         base = styleURL.substr(0, pos + 1);
     }
 
-    styleRequest = fs->request({ Resource::Kind::Style, styleURL }, util::RunLoop::getLoop(), [this, base](const Response &res) {
+    styleRequest = fs->request({ Resource::Kind::Style, styleURL }, [this, base](const Response &res) {
         styleRequest = nullptr;
 
         if (res.status == Response::Successful) {

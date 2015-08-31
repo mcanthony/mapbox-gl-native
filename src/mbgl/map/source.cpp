@@ -14,7 +14,6 @@
 #include <mbgl/storage/file_source.hpp>
 #include <mbgl/style/style_layer.hpp>
 #include <mbgl/platform/log.hpp>
-#include <mbgl/util/uv_detail.hpp>
 #include <mbgl/util/std.hpp>
 #include <mbgl/util/token.hpp>
 #include <mbgl/util/string.hpp>
@@ -151,7 +150,7 @@ void Source::load() {
     }
 
     FileSource* fs = util::ThreadContext::getFileSource();
-    req = fs->request({ Resource::Kind::Source, info.url }, util::RunLoop::getLoop(), [this](const Response &res) {
+    req = fs->request({ Resource::Kind::Source, info.url }, [this](const Response &res) {
         req = nullptr;
 
         if (res.status != Response::Successful) {
