@@ -1,6 +1,7 @@
 #ifndef MBGL_UTIL_RUN_LOOP
 #define MBGL_UTIL_RUN_LOOP
 
+#include <mbgl/util/async_task.hpp>
 #include <mbgl/util/noncopyable.hpp>
 #include <mbgl/util/work_task.hpp>
 #include <mbgl/util/work_request.hpp>
@@ -14,19 +15,20 @@
 namespace mbgl {
 namespace util {
 
+typedef void * LOOP_HANDLE;
+
 class RunLoop : private util::noncopyable {
 public:
-    RunLoop(uv_loop_t*);
+    RunLoop();
     ~RunLoop();
 
     static RunLoop* Get() {
         return current.get();
     }
 
-    static uv_loop_t* getLoop() {
-        return current.get()->get();
-    }
+    static LOOP_HANDLE getLoopHandle();
 
+    void run();
     void stop();
 
     // Invoke fn(args...) on this RunLoop.
@@ -38,7 +40,7 @@ public:
             std::move(tuple));
 
         withMutex([&] { queue.push(task); });
-        async.send();
+        async->send();
     }
 
     // Post the cancellable work fn(args...) to this RunLoop.
@@ -55,7 +57,7 @@ public:
             flag);
 
         withMutex([&] { queue.push(task); });
-        async.send();
+        async->send();
 
         return std::make_unique<WorkRequest>(task);
     }
@@ -80,7 +82,7 @@ public:
             flag);
 
         withMutex([&] { queue.push(task); });
-        async.send();
+        async->send();
 
         return std::make_unique<WorkRequest>(task);
     }
@@ -93,8 +95,6 @@ public:
             this->invoke(std::move(fn), std::move(args)...);
         };
     }
-
-    uv_loop_t* get() { return async.get()->loop; }
 
 private:
     template <class F, class P>
@@ -142,12 +142,27 @@ private:
 
     using Queue = std::queue<std::shared_ptr<WorkTask>>;
 
-    void withMutex(std::function<void()>&&);
-    void process();
+    void withMutex(std::function<void()>&& fn) {
+        std::lock_guard<std::recursive_mutex> lock(mutex);
+        fn();
+    }
+
+    void process() {
+        Queue queue_;
+        withMutex([&] { queue_.swap(queue); });
+
+        while (!queue_.empty()) {
+            (*(queue_.front()))();
+            queue_.pop();
+        }
+    }
 
     Queue queue;
     std::recursive_mutex mutex;
-    uv::async async;
+    std::unique_ptr<AsyncTask> async;
+
+    class Impl;
+    std::unique_ptr<Impl> impl;
 
     static uv::tls<RunLoop> current;
 };
