@@ -6,6 +6,7 @@
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/view.hpp>
 #include <mbgl/platform/qt/qmapboxgl.hpp>
+#include <mbgl/util/run_loop.hpp>
 
 #include <QSize>
 
@@ -29,20 +30,21 @@ public:
     std::array<uint16_t, 2> getSize() const final;
     std::array<uint16_t, 2> getFramebufferSize() const final;
 
-    void activate() final;
-    void deactivate() final;
-    void notify() final;
+    void activate() final {}
+    void deactivate() final {}
+    void notify() final {}
     void invalidate() final;
-    void beforeRender() final;
-    void afterRender() final;
+    void beforeRender() final {}
+    void afterRender() final {}
     void notifyMapChange(mbgl::MapChange change) final;
 
     QSize size;
 
     QMapboxGL *q_ptr = nullptr;
-    QMapboxGL::Observer *observer = nullptr;
 
     QFileSourcePrivate fileSourceObj;
+
+    mbgl::util::RunLoop loop;
     mbgl::Map mapObj;
 
 signals:

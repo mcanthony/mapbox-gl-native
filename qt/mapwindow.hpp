@@ -11,7 +11,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QWheelEvent;
 
-class MapWindow : public QGLWidget, public QMapboxGL::Observer
+class MapWindow : public QGLWidget
 {
 public:
     MapWindow();
@@ -26,12 +26,6 @@ private:
     void wheelEvent(QWheelEvent *ev) final;
     void resizeGL(int w, int h) final;
     void paintGL() final;
-
-    // QMapboxGL::Observer implementation.
-    void activated() final {}
-    void deactivated() final {}
-    void beforeRendering() final;
-    void afterRendering() final;
 
     QPointF m_lastPos;
 

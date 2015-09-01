@@ -8,9 +8,6 @@
 
 MapWindow::MapWindow()
 {
-    setAutoBufferSwap(false);
-
-    m_map.setObserver(this);
     connect(&m_map, SIGNAL(needsRendering()), this, SLOT(updateGL()));
 
     m_map.setAccessToken(qgetenv("MAPBOX_ACCESS_TOKEN"));
@@ -108,17 +105,4 @@ void MapWindow::resizeGL(int w, int h)
 void MapWindow::paintGL()
 {
     m_map.render();
-}
-
-void MapWindow::beforeRendering()
-{
-    // Mapbox Map thread.
-    makeCurrent();
-}
-
-void MapWindow::afterRendering()
-{
-    // Mapbox Map thread.
-    swapBuffers();
-    doneCurrent();
 }

@@ -21,11 +21,6 @@ QMapboxGL::~QMapboxGL()
 {
 }
 
-void QMapboxGL::setObserver(Observer *observer)
-{
-    d_ptr->observer = observer;
-}
-
 void QMapboxGL::setAccessToken(const QString &token)
 {
     d_ptr->fileSourceObj.setAccessToken(token);
@@ -224,8 +219,8 @@ QMapboxGLPrivate::QMapboxGLPrivate(QMapboxGL *q)
     , q_ptr(q)
     , mapObj(*this, fileSourceObj)
 {
-    connect(this, SIGNAL(needsRendering()), q_ptr, SIGNAL(needsRendering()), Qt::QueuedConnection);
-    connect(this, SIGNAL(mapRegionDidChange()), q_ptr, SIGNAL(mapRegionDidChange()), Qt::QueuedConnection);
+    connect(this, SIGNAL(needsRendering()), q_ptr, SIGNAL(needsRendering()), Qt::DirectConnection);
+    connect(this, SIGNAL(mapRegionDidChange()), q_ptr, SIGNAL(mapRegionDidChange()), Qt::DirectConnection);
 }
 
 QMapboxGLPrivate::~QMapboxGLPrivate()
@@ -248,47 +243,9 @@ std::array<uint16_t, 2> QMapboxGLPrivate::getFramebufferSize() const
     return getSize();
 }
 
-void QMapboxGLPrivate::activate()
-{
-    // Map thread.
-    if (observer) {
-        observer->activated();
-    }
-}
-
-void QMapboxGLPrivate::deactivate()
-{
-    // Map thread.
-    if (observer) {
-        observer->deactivated();
-    }
-}
-
-void QMapboxGLPrivate::notify()
-{
-    // Map thread.
-}
-
 void QMapboxGLPrivate::invalidate()
 {
-    // Map thread.
     emit needsRendering();
-}
-
-void QMapboxGLPrivate::beforeRender()
-{
-    // Map thread.
-    if (observer) {
-        observer->beforeRendering();
-    }
-}
-
-void QMapboxGLPrivate::afterRender()
-{
-    // Map thread.
-    if (observer) {
-        observer->afterRendering();
-    }
 }
 
 void QMapboxGLPrivate::notifyMapChange(mbgl::MapChange change)

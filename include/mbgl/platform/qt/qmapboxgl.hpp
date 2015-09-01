@@ -20,22 +20,8 @@ class QMapboxGL : public QObject
     Q_PROPERTY(double bearing READ bearing WRITE setBearing)
 
 public:
-    class Observer
-    {
-    public:
-        // These methods are called in the Mapbox render
-        // thread and must be thread safe. Use it for
-        // making the GL context current if needed.
-        virtual void activated() = 0;
-        virtual void deactivated() = 0;
-        virtual void beforeRendering() = 0;
-        virtual void afterRendering() = 0;
-    };
-
     QMapboxGL(QObject *parent = 0);
     ~QMapboxGL();
-
-    void setObserver(Observer *observer);
 
     void setAccessToken(const QString &token);
     void setCacheDatabase(const QString &path);
