@@ -35,7 +35,7 @@ void QFileSourcePrivate::setCacheDatabase(const QString& path)
     }
 }
 
-mbgl::Request *QFileSourcePrivate::request(const mbgl::Resource &resource, uv_loop_t *loop, Callback cb)
+mbgl::Request *QFileSourcePrivate::request(const mbgl::Resource &resource, Callback cb)
 {
     // WARNING: Must be thread-safe.
 
@@ -59,7 +59,7 @@ mbgl::Request *QFileSourcePrivate::request(const mbgl::Resource &resource, uv_lo
         normalizedUrl = resource.url;
     }
 
-    mbgl::Request* req = new mbgl::Request({ resource.kind, normalizedUrl }, loop, std::move(cb));
+    mbgl::Request* req = new mbgl::Request({ resource.kind, normalizedUrl }, std::move(cb));
     emit urlRequested(req);
 
     return req;

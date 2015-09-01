@@ -23,7 +23,7 @@ public:
     void setCacheDatabase(const QString& path);
 
     // FileSource implementation.
-    mbgl::Request *request(const mbgl::Resource &, uv_loop_t *, Callback) override;
+    mbgl::Request *request(const mbgl::Resource &, Callback) override;
     void cancel(mbgl::Request*) override;
 
 signals:
