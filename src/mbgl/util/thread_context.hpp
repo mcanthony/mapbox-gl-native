@@ -22,7 +22,7 @@ enum class ThreadPriority : bool {
 
 enum class ThreadType : uint8_t {
     Main,
-    Map,
+    Map = Main,
     Worker,
     Unknown,
 };

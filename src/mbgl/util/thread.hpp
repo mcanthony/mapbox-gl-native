@@ -124,8 +124,12 @@ void Thread<Object>::run(ThreadContext context, P&& params, std::index_sequence<
     loop = nullptr;
     object = nullptr;
 
+// Qt main loop works differently from libuv and
+// will process all the pending events before exit
+#if 0
     // Run the loop again to ensure that async close callbacks have been called.
     loop_.run();
+#endif
 
     ThreadContext::current.set(nullptr);
 
