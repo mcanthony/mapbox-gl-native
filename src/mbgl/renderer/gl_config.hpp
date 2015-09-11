@@ -20,6 +20,10 @@ public:
         }
     }
 
+    inline void force() {
+        MBGL_CHECK_ERROR(T::Set(current));
+    }
+
 private:
     typename T::Type current = T::Default;
 };
@@ -130,6 +134,8 @@ struct Blend {
 
 class Config {
 public:
+    void forceAll();
+
     Value<StencilFunc> stencilFunc;
     Value<StencilMask> stencilMask;
     Value<StencilTest> stencilTest;

@@ -3,6 +3,20 @@
 namespace mbgl {
 namespace gl {
 
+void Config::forceAll() {
+    stencilFunc.force();
+    stencilMask.force();
+    stencilTest.force();
+    depthRange.force();
+    depthMask.force();
+    depthTest.force();
+    blend.force();
+    colorMask.force();
+    clearDepth.force();
+    clearColor.force();
+    clearStencil.force();
+}
+
 const ClearDepth::Type ClearDepth::Default = 0;
 const ClearColor::Type ClearColor::Default = { 0, 0, 0, 0 };
 const ClearStencil::Type ClearStencil::Default = 0;

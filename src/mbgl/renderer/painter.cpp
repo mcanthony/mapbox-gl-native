@@ -161,6 +161,8 @@ void Painter::prepareTile(const Tile& tile) {
 }
 
 void Painter::render(const Style& style, TransformState state_, const FrameData& frame_, const TimePoint& time) {
+    config.forceAll();
+
     state = state_;
     frame = frame_;
 
