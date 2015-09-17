@@ -15,6 +15,11 @@
 #include <QSslConfiguration>
 #include <QNetworkProxyFactory>
 
+// Max number of request we are sending simultaneously to
+// QNetworkAccessManager to not overload it with requests.
+// Many get canceled before we need to make the actual get().
+const int kPendingMax = 4;
+
 namespace mbgl {
 
 // FIXME: Not in use, needed for linking as a library.
@@ -103,6 +108,13 @@ void QFileSourcePrivate::handleUrlRequest(mbgl::Request* req) {
         url.setUrl("file://" + QDir::currentPath() + "/" + url.host() + url.path());
     }
 
+#if QT_VERSION < 0x050000
+    if (m_pending.size() >= kPendingMax && m_pending.constFind(url) == m_pending.end()) {
+        m_requestQueue.enqueue(req);
+        return;
+    }
+#endif
+
     QPair<QNetworkReply*, QVector<mbgl::Request*>>& data = m_pending[url];
     QVector<mbgl::Request*>& requests = data.second;
     requests.append(req);
@@ -120,6 +132,16 @@ void QFileSourcePrivate::handleUrlRequest(mbgl::Request* req) {
 }
 
 void QFileSourcePrivate::handleUrlCancel(mbgl::Request* req) {
+#if QT_VERSION < 0x050000
+    int queueIndex = m_requestQueue.indexOf(req);
+
+    if (queueIndex != -1) {
+        m_requestQueue.removeAt(queueIndex);
+        req->destruct();
+        return;
+    }
+#endif
+
     QUrl url =
         QUrl::fromPercentEncoding(QByteArray(req->resource.url.data(), req->resource.url.size()));
 
@@ -144,7 +166,18 @@ void QFileSourcePrivate::handleUrlCancel(mbgl::Request* req) {
 
     if (requests.empty()) {
         m_pending.erase(it);
+#if QT_VERSION >= 0x050000
         reply->abort();
+#else
+        // XXX: We should be aborting the reply here
+        // but a bug on Qt4 causes the connection of
+        // other ongoing requests to drop if we call
+        // abort() too often (and we do).
+        //
+        // reply->abort();
+        //
+        Q_UNUSED(reply);
+#endif
     }
 }
 
@@ -154,6 +187,9 @@ void QFileSourcePrivate::replyFinish(QNetworkReply* reply) {
     auto it = m_pending.find(url);
     if (it == m_pending.end()) {
         reply->deleteLater();
+#if QT_VERSION < 0x050000
+        processQueue();
+#endif
         return;
     }
 
@@ -175,4 +211,16 @@ void QFileSourcePrivate::replyFinish(QNetworkReply* reply) {
 
     m_pending.erase(it);
     reply->deleteLater();
+#if QT_VERSION < 0x050000
+    processQueue();
+#endif
 }
+
+#if QT_VERSION < 0x050000
+void QFileSourcePrivate::processQueue()
+{
+    if (!m_requestQueue.isEmpty()) {
+        handleUrlRequest(m_requestQueue.dequeue());
+    }
+}
+#endif

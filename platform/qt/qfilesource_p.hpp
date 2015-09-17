@@ -8,6 +8,7 @@
 #include <QSslConfiguration>
 #include <QObject>
 #include <QPair>
+#include <QQueue>
 #include <QString>
 #include <QUrl>
 #include <QVector>
@@ -37,6 +38,11 @@ public slots:
     void replyFinish(QNetworkReply* reply);
 
 private:
+#if QT_VERSION < 0x050000
+    void processQueue();
+
+    QQueue<mbgl::Request*> m_requestQueue;
+#endif
     QMap<QUrl, QPair<QNetworkReply*, QVector<mbgl::Request*>>> m_pending;
     QNetworkAccessManager m_manager;
     QSslConfiguration m_ssl;
