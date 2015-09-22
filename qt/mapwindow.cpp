@@ -47,7 +47,11 @@ void MapWindow::keyPressEvent(QKeyEvent *ev)
 
 void MapWindow::mousePressEvent(QMouseEvent *ev)
 {
+#if QT_VERSION < 0x050000
     m_lastPos = ev->posF();
+#else
+    m_lastPos = ev->localPos();
+#endif
 
     if (ev->type() == QEvent::MouseButtonPress) {
         if (ev->buttons() == (Qt::LeftButton | Qt::RightButton)) {
@@ -68,17 +72,29 @@ void MapWindow::mousePressEvent(QMouseEvent *ev)
 
 void MapWindow::mouseMoveEvent(QMouseEvent *ev)
 {
+#if QT_VERSION < 0x050000
     QPointF delta = ev->posF() - m_lastPos;
+#else
+    QPointF delta = ev->localPos() - m_lastPos;
+#endif
 
     if (!delta.isNull()) {
         if (ev->buttons() == Qt::LeftButton) {
             m_map.moveBy(delta);
         } else if (ev->buttons() == Qt::RightButton) {
+#if QT_VERSION < 0x050000
             m_map.rotateBy(m_lastPos, ev->posF());
+#else
+            m_map.rotateBy(m_lastPos, ev->localPos());
+#endif
         }
     }
 
+#if QT_VERSION < 0x050000
     m_lastPos = ev->posF();
+#else
+    m_lastPos = ev->localPos();
+#endif
     ev->accept();
 }
 

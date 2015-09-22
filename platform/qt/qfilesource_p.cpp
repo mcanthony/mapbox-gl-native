@@ -104,7 +104,12 @@ void QFileSourcePrivate::handleUrlRequest(mbgl::Request *req)
     qreq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
 
     QSslConfiguration config = qreq.sslConfiguration();
+#if QT_VERSION >= 0x050000
+    config.setProtocol(QSsl::SecureProtocols);
+#else
+    // Qt 4 defines SecureProtocols as TLS1 or SSL3, but we don't want SSL3.
     config.setProtocol(QSsl::TlsV1);
+#endif
     qreq.setSslConfiguration(config);
 
     data.first = m_manager.get(qreq);
