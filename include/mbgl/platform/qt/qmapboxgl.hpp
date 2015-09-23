@@ -35,6 +35,9 @@ public:
     double longitude() const;
     void setLongitude(double longitude);
 
+    double scale() const;
+    void setScale(double scale, const QPointF &centerPixel = QPointF(-1, -1), int milliseconds = 0);
+
     double zoom() const;
     void setZoom(double zoom, int milliseconds = 0);
 
@@ -60,7 +63,7 @@ public:
     bool isFullyLoaded() const;
 
     void moveBy(const QPointF &offset);
-    void scaleBy(double scale, const QPointF &centerPixel, int milliseconds = 0);
+    void scaleBy(double scale, const QPointF &centerPixel = QPointF(-1, -1), int milliseconds = 0);
     void rotateBy(const QPointF &lastPosition, const QPointF &currentPosition);
 
     void resize(const QSize &size);

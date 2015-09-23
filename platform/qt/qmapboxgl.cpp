@@ -61,6 +61,16 @@ void QMapboxGL::setLongitude(double longitude_)
     d_ptr->mapObj.setLatLng({ latitude(), longitude_ });
 }
 
+double QMapboxGL::scale() const
+{
+    return d_ptr->mapObj.getScale();
+}
+
+void QMapboxGL::setScale(double scale_, const QPointF &centerPixel, int milliseconds)
+{
+    d_ptr->mapObj.setScale(scale_, centerPixel.x(), centerPixel.y(), std::chrono::milliseconds(milliseconds));
+}
+
 double QMapboxGL::zoom() const
 {
     return d_ptr->mapObj.getZoom();
@@ -155,9 +165,9 @@ void QMapboxGL::moveBy(const QPointF &offset)
     d_ptr->mapObj.moveBy(offset.x(), offset.y());
 }
 
-void QMapboxGL::scaleBy(double scale, const QPointF &centerPixel, int milliseconds) {
+void QMapboxGL::scaleBy(double scale_, const QPointF &centerPixel, int milliseconds) {
     d_ptr->mapObj.scaleBy(
-        scale, centerPixel.x(), centerPixel.y(), std::chrono::milliseconds(milliseconds));
+        scale_, centerPixel.x(), centerPixel.y(), std::chrono::milliseconds(milliseconds));
 }
 
 void QMapboxGL::rotateBy(const QPointF &lastPosition, const QPointF &currentPosition)
