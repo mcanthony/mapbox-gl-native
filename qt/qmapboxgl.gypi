@@ -40,7 +40,10 @@
       'type': 'executable',
 
       'dependencies': [
-        'qtlib',
+        '../mbgl.gyp:core',
+        '../mbgl.gyp:platform-<(platform_lib)',
+        '../mbgl.gyp:asset-<(asset_lib)',
+        '../mbgl.gyp:cache-<(cache_lib)',
         '../mbgl.gyp:copy_styles',
         '../mbgl.gyp:copy_certificate_bundle',
       ],
@@ -83,7 +86,7 @@
       'link_settings': {
         'conditions': [
           ['OS == "mac"', {
-            'libraries': [ '<@(libraries)' ],
+            'libraries': [ '<@(libraries)', '-framework OpenGL' ],
             'xcode_settings': { 'OTHER_LDFLAGS': [ '<@(ldflags)' ] }
           }, {
             'libraries': [ '<@(libraries)', '<@(ldflags)' ],
