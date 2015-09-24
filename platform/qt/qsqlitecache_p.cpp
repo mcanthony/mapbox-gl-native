@@ -26,10 +26,15 @@ QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
             "    `expires` INTEGER," // Timestamp when the server says the file expires.
             "    `data` BLOB,"
             "    `compressed` INTEGER NOT NULL DEFAULT 0" // Whether the data is compressed.
-            ");"
-            "CREATE INDEX IF NOT EXISTS `http_cache_kind_idx` ON `http_cache` (`kind`);");
+            ");");
         if (!createSchema.isActive()) {
             qWarning() << "Failed to create database schema: " << createSchema.lastError();
+        }
+
+        QSqlQuery createIndex = m_cache.exec(
+            "CREATE INDEX IF NOT EXISTS `http_cache_kind_idx` ON `http_cache` (`kind`);");
+        if (!createIndex.isActive()) {
+            qWarning() << "Failed to create database index: " << createIndex.lastError();
         }
 
         m_select = new QSqlQuery(m_cache);
