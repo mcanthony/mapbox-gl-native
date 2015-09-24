@@ -8,13 +8,15 @@
 #include <mbgl/storage/sqlite_cache.hpp>
 #include <mbgl/util/compression.hpp>
 #include <mbgl/util/mapbox.hpp>
+#include <mbgl/platform/log.hpp>
 
 QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
     : m_cache(QSqlDatabase::addDatabase("QSQLITE")) {
     m_cache.setDatabaseName(path);
 
     if (!m_cache.open()) {
-        qWarning() << "Error opening " << path << ":" << m_cache.lastError().text();
+        mbgl::Log::Error(mbgl::Event::Database, "Error opening database %s: %s", path.data(),
+                         m_cache.lastError().text().data());
     } else {
         QSqlQuery createSchema = m_cache.exec(
             "CREATE TABLE IF NOT EXISTS `http_cache` ("
@@ -28,21 +30,24 @@ QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
             "    `compressed` INTEGER NOT NULL DEFAULT 0" // Whether the data is compressed.
             ");");
         if (!createSchema.isActive()) {
-            qWarning() << "Failed to create database schema: " << createSchema.lastError();
+            mbgl::Log::Error(mbgl::Event::Database, "Failed to create database schema: %s",
+                             createSchema.lastError().text().data());
         }
 
         QSqlQuery createIndex = m_cache.exec(
             "CREATE INDEX IF NOT EXISTS `http_cache_kind_idx` ON `http_cache` (`kind`);");
         if (!createIndex.isActive()) {
-            qWarning() << "Failed to create database index: " << createIndex.lastError();
+            mbgl::Log::Error(mbgl::Event::Database, "Failed to create database index: %s",
+                             createIndex.lastError().text().data());
         }
 
         m_select = new QSqlQuery(m_cache);
         //                                0          1         2        3         4
         if (!m_select->prepare("SELECT `status`, `modified`, `etag`, `expires`, `data`, "
-        //                           5
+                               //    5
                                "`compressed` FROM `http_cache` WHERE `url` = ?")) {
-            qWarning() << "Failed to prepare select statement: " << m_select->lastError();
+            mbgl::Log::Error(mbgl::Event::Database, "Failed to prepare select statement: %s",
+                             m_select->lastError().text().data());
         }
 
         m_insert = new QSqlQuery(m_cache);
@@ -50,17 +55,20 @@ QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
                 "REPLACE INTO `http_cache` (`url`, `status`, `kind`, `modified`, "
                 // 4         5        6           7
                 "`etag`, `expires`, `data`, `compressed`) VALUES(?, ?, ?, ?, ?, ?, ?, ?)")) {
-            qWarning() << "Failed to prepare insert statement: " << m_insert->lastError();
+            mbgl::Log::Error(mbgl::Event::Database, "Failed to prepare insert statement: %s",
+                             m_insert->lastError().text().data());
         }
 
         m_update = new QSqlQuery(m_cache); //                       1               2
         if (!m_update->prepare("UPDATE `http_cache` SET `expires` = ? WHERE `url` = ?")) {
-            qWarning() << "Failed to prepare update statement: " << m_update->lastError();
+            mbgl::Log::Error(mbgl::Event::Database, "Failed to prepare delete statement: %s",
+                             m_update->lastError().text().data());
         }
 
         m_delete = new QSqlQuery(m_cache); //                          1
         if (!m_delete->prepare("DELETE FROM `http_cache` WHERE `url` = ?")) {
-            qWarning() << "Failed to prepare delete statement: " << m_delete->lastError();
+            mbgl::Log::Error(mbgl::Event::Database, "Failed to prepare delete statement: %s",
+                             m_delete->lastError().text().data());
         }
     }
 }
@@ -72,7 +80,8 @@ bool QSqliteCachePrivate::isValid() const {
 qint64 QSqliteCachePrivate::cacheSize() const {
     QSqlQuery size = m_cache.exec("SELECT SUM(LENGTH(`data`)) FROM `http_cache`");
     if (!size.isActive() || !size.first()) {
-        qWarning() << "Failed to determine cache size:" << size.lastError();
+        mbgl::Log::Warning(mbgl::Event::Database, "Failed to determine cache size: %s",
+                           size.lastError().text().data());
         return 0;
     } else {
         return size.value(0).toULongLong();
@@ -116,7 +125,8 @@ QNetworkCacheMetaData QSqliteCachePrivate::metaData(const QUrl& url) {
             return m_metaData;
         }
     } else {
-        qWarning() << "Failed to fetch cached data:" << m_select->lastError();
+        mbgl::Log::Warning(mbgl::Event::Database, "Failed to fetch cached data: %s",
+                           m_select->lastError().text().data());
         return m_metaData;
     }
 
@@ -178,7 +188,8 @@ QIODevice* QSqliteCachePrivate::prepare(const QNetworkCacheMetaData& metaData) {
 }
 
 void QSqliteCachePrivate::insert(QIODevice* device) {
-    QScopedPointer<QSqliteCachePrivateInsert> buffer(dynamic_cast<QSqliteCachePrivateInsert*>(device));
+    QScopedPointer<QSqliteCachePrivateInsert> buffer(
+        dynamic_cast<QSqliteCachePrivateInsert*>(device));
     auto& metaData = buffer->m_metaData;
 
     m_insert->bindValue(0 /* url */, unifyURL(metaData.url()));
@@ -211,14 +222,16 @@ void QSqliteCachePrivate::insert(QIODevice* device) {
     m_insert->bindValue(7 /* compressed */, 0);
 
     if (!m_insert->exec()) {
-        qWarning() << "Failed to cache data:" << m_insert->lastError();
+        mbgl::Log::Warning(mbgl::Event::Database, "Failed to cache data: %s",
+                           m_insert->lastError().text().data());
     }
 }
 
 bool QSqliteCachePrivate::remove(const QUrl& url) {
     m_delete->bindValue(0 /* url */, unifyURL(url));
     if (!m_delete->exec()) {
-        qWarning() << "Failed to delete cache entry:" << m_insert->lastError();
+        mbgl::Log::Warning(mbgl::Event::Database, "Failed to delete cache entry: %s",
+                           m_delete->lastError().text().data());
         return false;
     } else {
         return m_delete->numRowsAffected() > 0;
@@ -229,13 +242,15 @@ void QSqliteCachePrivate::updateMetaData(const QNetworkCacheMetaData& metaData) 
     m_update->bindValue(0 /* expires */, convertTime(metaData.expirationDate()));
     m_update->bindValue(1 /* url */, unifyURL(metaData.url()));
     if (!m_update->exec()) {
-        qWarning() << "Failed to update cache entry:" << m_insert->lastError();
+        mbgl::Log::Warning(mbgl::Event::Database, "Failed to update cache entry: %s",
+                           m_update->lastError().text().data());
     }
 }
 
 void QSqliteCachePrivate::clear() {
     QSqlQuery clear = m_cache.exec("DELETE FROM `http_cache`");
     if (!clear.isActive()) {
-        qWarning() << "Failed to clear cache:" << clear.lastError();
+        mbgl::Log::Warning(mbgl::Event::Database, "Failed to clear cache: %s",
+                           clear.lastError().text().data());
     }
 }
