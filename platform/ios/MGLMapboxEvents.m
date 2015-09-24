@@ -57,7 +57,6 @@ const NSTimeInterval MGLFlushInterval = 60;
 // All of the following properties are written to only from
 // the main thread, but can be read on any thread.
 //
-@property (atomic) NSString *advertiserId;
 @property (atomic) NSString *vendorId;
 @property (atomic) NSString *model;
 @property (atomic) NSString *iOSVersion;
@@ -70,23 +69,6 @@ const NSTimeInterval MGLFlushInterval = 60;
 
 - (instancetype)init {
     if (self = [super init]) {
-
-        // Dynamic detection of ASIdentifierManager from Mixpanel
-        // https://github.com/mixpanel/mixpanel-iphone/blob/master/LICENSE
-        _advertiserId = @"";
-        Class ASIdentifierManagerClass = NSClassFromString(@"ASIdentifierManager");
-        if (ASIdentifierManagerClass) {
-            SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
-            id sharedManager = ((id (*)(id, SEL))[ASIdentifierManagerClass methodForSelector:sharedManagerSelector])(ASIdentifierManagerClass, sharedManagerSelector);
-            // Add check here
-            SEL isAdvertisingTrackingEnabledSelector = NSSelectorFromString(@"isAdvertisingTrackingEnabled");
-            BOOL trackingEnabled = ((BOOL (*)(id, SEL))[sharedManager methodForSelector:isAdvertisingTrackingEnabledSelector])(sharedManager, isAdvertisingTrackingEnabledSelector);
-            if (trackingEnabled) {
-                SEL advertisingIdentifierSelector = NSSelectorFromString(@"advertisingIdentifier");
-                NSUUID *uuid = ((NSUUID* (*)(id, SEL))[sharedManager methodForSelector:advertisingIdentifierSelector])(sharedManager, advertisingIdentifierSelector);
-                _advertiserId = [uuid UUIDString];
-            }
-        }
         _vendorId = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
         
         _model = [self sysInfoByName:"hw.machine"];
@@ -506,7 +488,6 @@ const NSTimeInterval MGLFlushInterval = 60;
         [evt setObject:@(version) forKey:@"version"];
         [evt setObject:[strongSelf.rfc3339DateFormatter stringFromDate:[NSDate date]] forKey:@"created"];
         [evt setObject:strongSelf.instanceID forKey:@"instance"];
-        [evt setObject:strongSelf.data.advertiserId forKey:@"advertiserId"];
         [evt setObject:strongSelf.data.vendorId forKey:@"vendorId"];
         [evt setObject:strongSelf.appBundleId forKeyedSubscript:@"appBundleId"];
         
