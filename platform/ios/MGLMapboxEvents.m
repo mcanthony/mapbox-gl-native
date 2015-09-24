@@ -1,7 +1,6 @@
 #import "MGLMapboxEvents.h"
 
 #import <UIKit/UIKit.h>
-#import <SystemConfiguration/CaptiveNetwork.h>
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
 #import <CoreTelephony/CTCarrier.h>
 #import <CoreLocation/CoreLocation.h>
@@ -507,7 +506,7 @@ const NSTimeInterval MGLFlushInterval = 60;
         }
         
         MGLReachability *reachability = [MGLReachability reachabilityForLocalWiFi];
-        [evt setValue:([reachability isReachableViaWiFi] ? @1 : @0) forKey:@"wifi"];
+        [evt setValue:([reachability isReachableViaWiFi] ? @YES : @NO) forKey:@"wifi"];
         
         [evt setValue:@([strongSelf contentSizeScale]) forKey:@"accessibilityFontScale"];
 
