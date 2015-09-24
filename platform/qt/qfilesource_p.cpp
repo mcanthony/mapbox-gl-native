@@ -102,6 +102,7 @@ void QFileSourcePrivate::handleUrlRequest(mbgl::Request* req) {
 
     QNetworkRequest qreq = QNetworkRequest(url);
     qreq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+    qreq.setRawHeader("User-Agent", "MapboxGL/1.0 [Qt]");
 
     QSslConfiguration config = qreq.sslConfiguration();
 #if QT_VERSION >= 0x050000
