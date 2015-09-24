@@ -6,6 +6,7 @@
 #include <mbgl/util/mapbox.hpp>
 #include <mbgl/storage/request.hpp>
 #include <mbgl/storage/response.hpp>
+#include <mbgl/platform/log.hpp>
 
 #include <QByteArray>
 #include <QDir>
@@ -26,14 +27,24 @@ std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*) {
 QFileSourcePrivate::QFileSourcePrivate() {
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
+#if QT_VERSION >= 0x050000
+    m_ssl.setProtocol(QSsl::SecureProtocols);
+#else
+    // Qt 4 defines SecureProtocols as TLS1 or SSL3, but we don't want SSL3.
+    m_ssl.setProtocol(QSsl::TlsV1);
+#endif
+
+    m_ssl.setCaCertificates(QSslCertificate::fromPath("ca-bundle.crt"));
+    if (m_ssl.caCertificates().isEmpty()) {
+        mbgl::Log::Warning(mbgl::Event::HttpRequest, "Could not load list of certificate authorities");
+    }
+
     connect(this, SIGNAL(urlRequested(mbgl::Request*)), this,
             SLOT(handleUrlRequest(mbgl::Request*)), Qt::QueuedConnection);
     connect(this, SIGNAL(urlCanceled(mbgl::Request*)), this, SLOT(handleUrlCancel(mbgl::Request*)),
             Qt::QueuedConnection);
 
     connect(&m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinish(QNetworkReply*)));
-    connect(&m_manager, SIGNAL(sslErrors(QNetworkReply*, const QList<QSslError>&)), this,
-            SLOT(sslErrors(QNetworkReply*, const QList<QSslError>&)));
 }
 
 void QFileSourcePrivate::setAccessToken(const QString& token) {
@@ -103,15 +114,7 @@ void QFileSourcePrivate::handleUrlRequest(mbgl::Request* req) {
     QNetworkRequest qreq = QNetworkRequest(url);
     qreq.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
     qreq.setRawHeader("User-Agent", "MapboxGL/1.0 [Qt]");
-
-    QSslConfiguration config = qreq.sslConfiguration();
-#if QT_VERSION >= 0x050000
-    config.setProtocol(QSsl::SecureProtocols);
-#else
-    // Qt 4 defines SecureProtocols as TLS1 or SSL3, but we don't want SSL3.
-    config.setProtocol(QSsl::TlsV1);
-#endif
-    qreq.setSslConfiguration(config);
+    qreq.setSslConfiguration(m_ssl);
 
     data.first = m_manager.get(qreq);
 }
@@ -172,9 +175,4 @@ void QFileSourcePrivate::replyFinish(QNetworkReply* reply) {
 
     m_pending.erase(it);
     reply->deleteLater();
-}
-
-void QFileSourcePrivate::sslErrors(QNetworkReply* reply, const QList<QSslError>&) {
-    // FIXME: Install Mapbox certificates.
-    reply->ignoreSslErrors();
 }

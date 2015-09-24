@@ -5,6 +5,7 @@
 
 #include <QMap>
 #include <QNetworkAccessManager>
+#include <QSslConfiguration>
 #include <QObject>
 #include <QPair>
 #include <QString>
@@ -34,11 +35,11 @@ public slots:
     void handleUrlCancel(mbgl::Request*);
 
     void replyFinish(QNetworkReply* reply);
-    void sslErrors(QNetworkReply* reply, const QList<QSslError>& errors);
 
 private:
     QMap<QUrl, QPair<QNetworkReply*, QVector<mbgl::Request*>>> m_pending;
     QNetworkAccessManager m_manager;
+    QSslConfiguration m_ssl;
 
     std::string m_token;
 };
