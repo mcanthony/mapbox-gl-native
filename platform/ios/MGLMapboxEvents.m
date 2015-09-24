@@ -6,6 +6,8 @@
 #import <CoreTelephony/CTCarrier.h>
 #import <CoreLocation/CoreLocation.h>
 
+#include <mbgl/platform/darwin/reachability.h>
+
 #import "MGLAccountManager.h"
 #import "NSProcessInfo+MGLAdditions.h"
 #import "NSBundle+MGLAdditions.h"
@@ -523,12 +525,8 @@ const NSTimeInterval MGLFlushInterval = 60;
             [evt setObject:[NSNull null] forKey:@"cellularNetworkType"];
         }
         
-        NSString *wifi = [strongSelf wifiNetworkName];
-        if (wifi) {
-            [evt setValue:wifi forKey:@"wifi"];
-        } else {
-            [evt setObject:[NSNull null] forKey:@"wifi"];
-        }
+        MGLReachability *reachability = [MGLReachability reachabilityForLocalWiFi];
+        [evt setValue:([reachability isReachableViaWiFi] ? @1 : @0) forKey:@"wifi"];
         
         [evt setValue:@([strongSelf contentSizeScale]) forKey:@"accessibilityFontScale"];
 
@@ -733,23 +731,6 @@ const NSTimeInterval MGLFlushInterval = 60;
     }
 
     return result;
-}
-
-// Can be called from any thread.
-//
-- (NSString *) wifiNetworkName {
-    
-    NSString *ssid = nil;
-    CFArrayRef interfaces = CNCopySupportedInterfaces();
-    if (interfaces) {
-        NSDictionary *info = CFBridgingRelease(CNCopyCurrentNetworkInfo(CFArrayGetValueAtIndex(interfaces, 0)));
-        if (info) {
-            ssid = info[@"SSID"];
-        }
-        CFRelease(interfaces);
-    }
-    
-    return ssid;
 }
 
 // Can be called from any thread.
