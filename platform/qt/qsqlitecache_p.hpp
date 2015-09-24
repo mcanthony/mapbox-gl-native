@@ -33,6 +33,10 @@ public slots:
 
 private:
     QSqlDatabase m_cache;
+    QSqlQuery* m_select = nullptr;
+    QSqlQuery* m_insert = nullptr;
+    QSqlQuery* m_update = nullptr;
+    QSqlQuery* m_delete = nullptr;
 
     QNetworkCacheMetaData m_metaData;
     QScopedPointer<QBuffer> m_buffer;

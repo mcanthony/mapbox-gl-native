@@ -75,24 +75,16 @@
 
       'conditions': [
         ['OS == "mac"', {
+          'libraries': [ '<@(libraries)' ],
           'xcode_settings': {
             'OTHER_CPLUSPLUSFLAGS': [ '<@(cflags_cc)' ],
-          }
+            'OTHER_LDFLAGS': [ '<@(ldflags)', '-framework OpenGL' ],
+          },
         }, {
           'cflags_cc': [ '<@(cflags_cc)' ],
-        }]
+          'libraries': [ '<@(libraries)', '<@(ldflags)' ],
+        }],
       ],
-
-      'link_settings': {
-        'conditions': [
-          ['OS == "mac"', {
-            'libraries': [ '<@(libraries)', '-framework OpenGL' ],
-            'xcode_settings': { 'OTHER_LDFLAGS': [ '<@(ldflags)' ] }
-          }, {
-            'libraries': [ '<@(libraries)', '<@(ldflags)' ],
-          }]
-        ],
-      },
     },
     {
       'target_name': 'qtpackage_copy',

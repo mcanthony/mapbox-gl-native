@@ -12,6 +12,7 @@
 #include <QNetworkReply>
 #include <QScopedPointer>
 #include <QSslConfiguration>
+#include <QNetworkProxyFactory>
 
 namespace mbgl {
 
@@ -23,6 +24,8 @@ std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*) {
 } // namespace mbgl
 
 QFileSourcePrivate::QFileSourcePrivate() {
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
+
     connect(this, SIGNAL(urlRequested(mbgl::Request*)), this,
             SLOT(handleUrlRequest(mbgl::Request*)), Qt::QueuedConnection);
     connect(this, SIGNAL(urlCanceled(mbgl::Request*)), this, SLOT(handleUrlCancel(mbgl::Request*)),
@@ -142,7 +145,7 @@ void QFileSourcePrivate::handleUrlCancel(mbgl::Request* req) {
 }
 
 void QFileSourcePrivate::replyFinish(QNetworkReply* reply) {
-    QUrl url = reply->request().url();
+    const QUrl& url = reply->request().url();
 
     auto it = m_pending.find(url);
     if (it == m_pending.end()) {
