@@ -134,10 +134,7 @@ QNetworkCacheMetaData QSqliteCachePrivate::metaData(const QUrl& url) {
     QByteArray cacheData(m_select->value(4).toByteArray());
 
     if (m_select->value(5).toBool()) { // Compressed.
-        std::string compressed(cacheData.constData(), cacheData.size());
-        std::string decompressed = mbgl::util::decompress(compressed);
-
-        m_buffer->setData(QByteArray(decompressed.data(), decompressed.size()));
+        m_buffer->setData(qUncompress(cacheData));
     } else {
         m_buffer->setData(cacheData);
     }
@@ -215,11 +212,22 @@ void QSqliteCachePrivate::insert(QIODevice* device) {
     if (!etag) {
         m_insert->bindValue(4 /* etag */, "");
     }
-
     // TODO: Compress data that looks easily compressible
     buffer->seek(0);
-    m_insert->bindValue(6 /* data */, buffer->data());
-    m_insert->bindValue(7 /* compressed */, 0);
+    const QByteArray& data = buffer->data();
+    uint8_t sig[8];
+    if (8 == buffer->peek(reinterpret_cast<char*>(sig), 8) &&
+        ((sig[0] == 0x89 && sig[1] == 0x50 && sig[2] == 0x4e && sig[3] == 0x47 &&
+          sig[4] == 0x0d && sig[5] == 0x0a && sig[6] == 0x1a && sig[7] == 0x0a) ||
+         (sig[0] == 0xff && sig[1] == 0xd8 && sig[2] == 0xff) ||
+         (sig[0] == 0x47 && sig[1] == 0x49 && sig[2] == 0x46 && sig[3] == 0x38))) {
+        // The data has the signature of a compressed file, so we don't need to recompress.
+        m_insert->bindValue(6 /* data */, data);
+        m_insert->bindValue(7 /* compressed */, 0);
+    } else {
+        m_insert->bindValue(6 /* data */, qCompress(data));
+        m_insert->bindValue(7 /* compressed */, 1);
+    }
 
     if (!m_insert->exec()) {
         mbgl::Log::Warning(mbgl::Event::Database, "Failed to cache data: %s",
