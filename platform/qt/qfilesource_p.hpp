@@ -11,8 +11,7 @@
 #include <QUrl>
 #include <QVector>
 
-class QFileSourcePrivate : public QObject, public mbgl::FileSource
-{
+class QFileSourcePrivate : public QObject, public mbgl::FileSource {
     Q_OBJECT
 
 public:
@@ -23,19 +22,19 @@ public:
     void setCacheDatabase(const QString& path);
 
     // FileSource implementation.
-    mbgl::Request *request(const mbgl::Resource &, Callback) override;
+    mbgl::Request* request(const mbgl::Resource&, Callback) override;
     void cancel(mbgl::Request*) override;
 
 signals:
-    void urlRequested(mbgl::Request *);
-    void urlCanceled(mbgl::Request *);
+    void urlRequested(mbgl::Request*);
+    void urlCanceled(mbgl::Request*);
 
 public slots:
-    void handleUrlRequest(mbgl::Request *);
-    void handleUrlCancel(mbgl::Request *);
+    void handleUrlRequest(mbgl::Request*);
+    void handleUrlCancel(mbgl::Request*);
 
-    void replyFinish(QNetworkReply *reply);
-    void sslErrors(QNetworkReply *reply, const QList<QSslError> &errors);
+    void replyFinish(QNetworkReply* reply);
+    void sslErrors(QNetworkReply* reply, const QList<QSslError>& errors);
 
 private:
     QMap<QUrl, QPair<QNetworkReply*, QVector<mbgl::Request*>>> m_pending;

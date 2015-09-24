@@ -9,10 +9,8 @@
 #include <mbgl/util/compression.hpp>
 #include <mbgl/util/mapbox.hpp>
 
-
-QSqliteCachePrivate::QSqliteCachePrivate(const QString &path)
-    : m_cache(QSqlDatabase::addDatabase("QSQLITE"))
-{
+QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
+    : m_cache(QSqlDatabase::addDatabase("QSQLITE")) {
     m_cache.setDatabaseName(path);
 
     if (!m_cache.open()) {
@@ -20,32 +18,27 @@ QSqliteCachePrivate::QSqliteCachePrivate(const QString &path)
     }
 }
 
-bool QSqliteCachePrivate::isValid() const
-{
+bool QSqliteCachePrivate::isValid() const {
     return m_cache.isOpen();
 }
 
-qint64 QSqliteCachePrivate::cacheSize() const
-{
+qint64 QSqliteCachePrivate::cacheSize() const {
     // Not implemented.
 
     return 0;
 }
 
-QIODevice *QSqliteCachePrivate::data(const QUrl &)
-{
+QIODevice* QSqliteCachePrivate::data(const QUrl&) {
     m_buffer->open(QIODevice::ReadOnly);
 
     return m_buffer.take();
 }
 
-void QSqliteCachePrivate::insert(QIODevice *)
-{
+void QSqliteCachePrivate::insert(QIODevice*) {
     // Not implemented.
 }
 
-QNetworkCacheMetaData QSqliteCachePrivate::metaData(const QUrl &url)
-{
+QNetworkCacheMetaData QSqliteCachePrivate::metaData(const QUrl& url) {
     QString normalized(url.toString());
 
     // XXX: In the cache, we use % encoding for the URLs, but only
@@ -90,26 +83,22 @@ QNetworkCacheMetaData QSqliteCachePrivate::metaData(const QUrl &url)
     return m_metaData;
 }
 
-QIODevice *QSqliteCachePrivate::prepare(const QNetworkCacheMetaData &)
-{
+QIODevice* QSqliteCachePrivate::prepare(const QNetworkCacheMetaData&) {
     // Not implemented.
 
     return nullptr;
 }
 
-bool QSqliteCachePrivate::remove(const QUrl &)
-{
+bool QSqliteCachePrivate::remove(const QUrl&) {
     // Not implemented.
 
     return true;
 }
 
-void QSqliteCachePrivate::updateMetaData(const QNetworkCacheMetaData &)
-{
+void QSqliteCachePrivate::updateMetaData(const QNetworkCacheMetaData&) {
     // Not implemented.
 }
 
-void QSqliteCachePrivate::clear()
-{
+void QSqliteCachePrivate::clear() {
     // Not implemented.
 }

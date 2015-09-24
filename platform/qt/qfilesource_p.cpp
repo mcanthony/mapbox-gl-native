@@ -16,29 +16,28 @@
 namespace mbgl {
 
 // FIXME: Not in use, needed for linking as a library.
-std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*)
-{
+std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*) {
     return nullptr;
 }
 
-}
+} // namespace mbgl
 
-QFileSourcePrivate::QFileSourcePrivate()
-{
-    connect(this, SIGNAL(urlRequested(mbgl::Request*)), this, SLOT(handleUrlRequest(mbgl::Request*)), Qt::QueuedConnection);
-    connect(this, SIGNAL(urlCanceled(mbgl::Request*)), this, SLOT(handleUrlCancel(mbgl::Request*)), Qt::QueuedConnection);
+QFileSourcePrivate::QFileSourcePrivate() {
+    connect(this, SIGNAL(urlRequested(mbgl::Request*)), this,
+            SLOT(handleUrlRequest(mbgl::Request*)), Qt::QueuedConnection);
+    connect(this, SIGNAL(urlCanceled(mbgl::Request*)), this, SLOT(handleUrlCancel(mbgl::Request*)),
+            Qt::QueuedConnection);
 
     connect(&m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinish(QNetworkReply*)));
-    connect(&m_manager, SIGNAL(sslErrors(QNetworkReply*, const QList<QSslError> &)), this, SLOT(sslErrors(QNetworkReply*, const QList<QSslError>&)));
+    connect(&m_manager, SIGNAL(sslErrors(QNetworkReply*, const QList<QSslError>&)), this,
+            SLOT(sslErrors(QNetworkReply*, const QList<QSslError>&)));
 }
 
-void QFileSourcePrivate::setAccessToken(const QString& token)
-{
+void QFileSourcePrivate::setAccessToken(const QString& token) {
     m_token = token.toUtf8().constData();
 }
 
-void QFileSourcePrivate::setCacheDatabase(const QString& path)
-{
+void QFileSourcePrivate::setCacheDatabase(const QString& path) {
     QScopedPointer<QSqliteCachePrivate> cache(new QSqliteCachePrivate(path));
 
     if (cache->isValid()) {
@@ -46,8 +45,7 @@ void QFileSourcePrivate::setCacheDatabase(const QString& path)
     }
 }
 
-mbgl::Request *QFileSourcePrivate::request(const mbgl::Resource &resource, Callback cb)
-{
+mbgl::Request* QFileSourcePrivate::request(const mbgl::Resource& resource, Callback cb) {
     // WARNING: Must be thread-safe.
 
     std::string normalizedUrl;
@@ -76,24 +74,23 @@ mbgl::Request *QFileSourcePrivate::request(const mbgl::Resource &resource, Callb
     return req;
 }
 
-void QFileSourcePrivate::cancel(mbgl::Request *req)
-{
+void QFileSourcePrivate::cancel(mbgl::Request* req) {
     // WARNING: Must be thread-safe.
 
     req->cancel();
     emit urlCanceled(req);
 }
 
-void QFileSourcePrivate::handleUrlRequest(mbgl::Request *req)
-{
-    QUrl url = QUrl::fromPercentEncoding(QByteArray(req->resource.url.data(), req->resource.url.size()));
+void QFileSourcePrivate::handleUrlRequest(mbgl::Request* req) {
+    QUrl url =
+        QUrl::fromPercentEncoding(QByteArray(req->resource.url.data(), req->resource.url.size()));
 
     if (url.scheme() == "asset") {
         url.setUrl("file://" + QDir::currentPath() + "/" + url.host() + url.path());
     }
 
-    QPair<QNetworkReply*, QVector<mbgl::Request*>> &data = m_pending[url];
-    QVector<mbgl::Request*> &requests = data.second;
+    QPair<QNetworkReply*, QVector<mbgl::Request*>>& data = m_pending[url];
+    QVector<mbgl::Request*>& requests = data.second;
     requests.append(req);
 
     if (requests.size() > 1) {
@@ -115,9 +112,9 @@ void QFileSourcePrivate::handleUrlRequest(mbgl::Request *req)
     data.first = m_manager.get(qreq);
 }
 
-void QFileSourcePrivate::handleUrlCancel(mbgl::Request *req)
-{
-    QUrl url = QUrl::fromPercentEncoding(QByteArray(req->resource.url.data(), req->resource.url.size()));
+void QFileSourcePrivate::handleUrlCancel(mbgl::Request* req) {
+    QUrl url =
+        QUrl::fromPercentEncoding(QByteArray(req->resource.url.data(), req->resource.url.size()));
 
     auto it = m_pending.find(url);
     if (it == m_pending.end()) {
@@ -125,9 +122,9 @@ void QFileSourcePrivate::handleUrlCancel(mbgl::Request *req)
         return;
     }
 
-    QPair<QNetworkReply*, QVector<mbgl::Request*>> &data = it.value();
+    QPair<QNetworkReply*, QVector<mbgl::Request*>>& data = it.value();
     QNetworkReply* reply = data.first;
-    QVector<mbgl::Request *> &requests = data.second;
+    QVector<mbgl::Request*>& requests = data.second;
 
     for (int i = 0; i < requests.size(); ++i) {
         if (req == requests.at(i)) {
@@ -144,8 +141,7 @@ void QFileSourcePrivate::handleUrlCancel(mbgl::Request *req)
     }
 }
 
-void QFileSourcePrivate::replyFinish(QNetworkReply *reply)
-{
+void QFileSourcePrivate::replyFinish(QNetworkReply* reply) {
     QUrl url = reply->request().url();
 
     auto it = m_pending.find(url);
@@ -165,7 +161,7 @@ void QFileSourcePrivate::replyFinish(QNetworkReply *reply)
         }
     }
 
-    QVector<mbgl::Request *> &requests = it.value().second;
+    QVector<mbgl::Request*>& requests = it.value().second;
     for (auto req : requests) {
         req->notify(response);
     }
@@ -174,8 +170,7 @@ void QFileSourcePrivate::replyFinish(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-void QFileSourcePrivate::sslErrors(QNetworkReply *reply, const QList<QSslError> &)
-{
+void QFileSourcePrivate::sslErrors(QNetworkReply* reply, const QList<QSslError>&) {
     // FIXME: Install Mapbox certificates.
     reply->ignoreSslErrors();
 }

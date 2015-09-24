@@ -9,24 +9,23 @@
 class QBuffer;
 class QString;
 
-class QSqliteCachePrivate : public QAbstractNetworkCache
-{
+class QSqliteCachePrivate : public QAbstractNetworkCache {
     Q_OBJECT
 
 public:
-    QSqliteCachePrivate(const QString &path);
+    QSqliteCachePrivate(const QString& path);
     ~QSqliteCachePrivate() override = default;
 
     bool isValid() const;
 
     // SqliteCache implementation.
     qint64 cacheSize() const override;
-    QIODevice *data (const QUrl &url) override;
-    void insert(QIODevice *device) override;
-    QNetworkCacheMetaData metaData(const QUrl &url) override;
-    QIODevice *prepare( const QNetworkCacheMetaData &metaData) override;
-    bool remove(const QUrl &url) override;
-    void updateMetaData(const QNetworkCacheMetaData &metaData) override;
+    QIODevice* data(const QUrl& url) override;
+    void insert(QIODevice* device) override;
+    QNetworkCacheMetaData metaData(const QUrl& url) override;
+    QIODevice* prepare(const QNetworkCacheMetaData& metaData) override;
+    bool remove(const QUrl& url) override;
+    void updateMetaData(const QNetworkCacheMetaData& metaData) override;
 
 public slots:
     // SqliteCache implementation.
