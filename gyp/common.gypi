@@ -35,7 +35,6 @@
           '-Wshadow',
           '-Wno-variadic-macros',
           '-Wno-error=unused-parameter',
-          '-Wno-c++1y-extensions',
           '-frtti',
           '-fexceptions',
           '${CFLAGS}',
