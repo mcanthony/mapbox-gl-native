@@ -23,6 +23,8 @@ public:
     QMapboxGL(QObject *parent = 0);
     ~QMapboxGL();
 
+    typedef QPair<double, double> Coordinate;
+
     void setAccessToken(const QString &token);
     void setCacheDatabase(const QString &path);
 
@@ -51,7 +53,7 @@ public:
     double pitch() const;
     void setPitch(double pitch, int milliseconds = 0);
 
-    QPointF coordinate() const;
+    Coordinate coordinate() const;
     void setCoordinate(const QPointF &coordinate, int milliseconds = 0);
     void setCoordinateZoom(const QPointF &coordinate, double zoom, int milliseconds = 0);
 
@@ -71,8 +73,8 @@ public:
     void setSprite(const QString &name, const QImage &sprite);
     quint32 addPointAnnotation(const QString &name, const QPointF &position);
 
-    QPointF pixelForCoordinate(const QPointF &coordinate) const;
-    QPointF coordinateForPixel(const QPointF &pixel) const;
+    QPointF pixelForCoordinate(const Coordinate &coordinate) const;
+    Coordinate coordinateForPixel(const QPointF &pixel) const;
 
 public slots:
     void render();
