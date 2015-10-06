@@ -1555,9 +1555,9 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
 
         // Load the default marker sprite
         if (marker.getSprite() == null) {
-            BitmapDrawable bitmapDrawable = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.default_marker);
-            Bitmap bitmap = bitmapDrawable.getBitmap();
-            setSprite(DEFAULT_SPRITE, bitmap);
+            //BitmapDrawable bitmapDrawable = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.default_marker);
+            //Bitmap bitmap = bitmapDrawable.getBitmap();
+            //setSprite(DEFAULT_SPRITE, bitmap);
 
             // Red default marker is currently broken
             marker.setSprite("default_marker");
@@ -1571,17 +1571,33 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
         return marker;
     }
 
-    public List<Marker> addMarkers(List<Marker> markers) {
-        long[] ids = mNativeMapView.addMarkers(markers);
-        Marker m;
-        int count = markers.size();
-        for (int i = 0; i < count; i++) {
-            m = markers.get(i);
-            m.setId(ids[i]);
-            m.setMapView(this);
-            mAnnotations.add(m);
+    public List<Marker> addMarkers(List<MarkerOptions> markerOptionsList) {
+        List<Marker> markers = new ArrayList<>(markerOptionsList.size());
+        for (MarkerOptions markerOptions : markerOptionsList) {
+            Marker marker = markerOptions.getMarker();
+
+            // Load the default marker sprite
+            if (marker.getSprite() == null) {
+                //BitmapDrawable bitmapDrawable = (BitmapDrawable) ContextCompat.getDrawable(mContext, R.drawable.default_marker);
+                //Bitmap bitmap = bitmapDrawable.getBitmap();
+                //setSprite(DEFAULT_SPRITE, bitmap);
+
+                // Red default marker is currently broken
+                marker.setSprite("default_marker");
+                //marker.setSprite(DEFAULT_SPRITE);
+            }
+            markers.add(markerOptions.getMarker());
         }
-        return markers;
+
+        long[] ids = mNativeMapView.addMarkers(markers);
+
+        for (int i = 0; i < markers.size(); i++) {
+            markers.get(i).setId(ids[i]);
+            markers.get(i).setMapView(this);
+            mAnnotations.add(markers.get(i));
+        }
+
+        return Collections.unmodifiableList(markers);
     }
 
     public Polyline addPolyline(PolylineOptions polylineOptions) {
@@ -1593,6 +1609,16 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
         return polyline;
     }
 
+    public List<Polyline> addPolylines(List<PolylineOptions> polylineOptionsList) {
+        // TODO make faster in JNI
+        List<Polyline> polylines = new ArrayList<>(polylineOptionsList.size());
+        for (PolylineOptions polylineOptions : polylineOptionsList) {
+            polylines.add(addPolyline(polylineOptions));
+        }
+
+        return Collections.unmodifiableList(polylines);
+    }
+
     public Polygon addPolygon(PolygonOptions polygonOptions) {
         Polygon polygon = polygonOptions.getPolygon();
         long id = mNativeMapView.addPolygon(polygon);
@@ -1602,10 +1628,10 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
         return polygon;
     }
 
-    public List<Polygon> addPolygons(List<PolygonOptions> polygonOptions) {
-        List<Polygon> polygons = new ArrayList<>();
-        for (PolygonOptions popts : polygonOptions) {
-            polygons.add(popts.getPolygon());
+    public List<Polygon> addPolygons(List<PolygonOptions> polygonOptionsList) {
+        List<Polygon> polygons = new ArrayList<>(polygonOptionsList.size());
+        for (PolygonOptions polygonOptions : polygonOptionsList) {
+            polygons.add(polygonOptions.getPolygon());
         }
 
         long[] ids = mNativeMapView.addPolygons(polygons);
@@ -1640,13 +1666,22 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
         mAnnotations.remove(annotation);
     }
 
-    public void removeAnnotation(long annotationId) {
+    public void removeAnnotations(List<Annotation> annotationList) {
+        // TODO make faster in JNI
+        for (Annotation annotation : annotationList) {
+            removeAnnotation(annotation);
+        }
+    }
+
+    // TODO why using ids here?
+    private void removeAnnotation(long annotationId) {
         mNativeMapView.removeAnnotation(annotationId);
         removeAnnotationsWithId(annotationId);
     }
 
-    public void removeAnnotations() {
+    public void removeAllAnnotations() {
         long[] ids = new long[mAnnotations.size()];
+
         for (int i = 0; i < mAnnotations.size(); i++) {
             Annotation annotation = mAnnotations.get(i);
             long id = annotation.getId();
@@ -1655,28 +1690,33 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
                 ((Marker) annotation).hideInfoWindow();
             }
         }
+
         mNativeMapView.removeAnnotations(ids);
         mAnnotations.clear();
     }
 
-    public List<Annotation> getAnnotations() {
+    public List<Annotation> getAllAnnotations() {
         return Collections.unmodifiableList(mAnnotations);
     }
 
+    // TODO only returns markers? rename?
     public List<Annotation> getAnnotationsInBounds(BoundingBox bbox) {
-        List<Annotation> annotations = new ArrayList<>();
         long[] ids = mNativeMapView.getAnnotationsInBounds(bbox);
-        List<Long> idsList = new ArrayList<>();
+
+        List<Long> idsList = new ArrayList<>(ids.length);
         for (long id : ids) {
             idsList.add(id);
         }
+
+        List<Annotation> annotations = new ArrayList<>(ids.length);
         for (int i = 0; i < mAnnotations.size(); i++) {
             Annotation annotation = mAnnotations.get(i);
             if (annotation instanceof Marker && idsList.contains(annotation.getId())) {
                 annotations.add(annotation);
             }
         }
-        return annotations;
+
+        return Collections.unmodifiableList(annotations);
     }
 
     // Used by InfoWindow
@@ -1687,10 +1727,11 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
     /**
      * Returns the distance spanned by one pixel at the specified latitude and current zoom level.
      * <p/>
-     * The distance between pixels decreases as the latitude approaches the poles. This relationship parallels the relationship between longitudinal coordinates at different latitudes.
+     * The distance between pixels decreases as the latitude approaches the poles.
+     * This relationship parallels the relationship between longitudinal coordinates at different latitudes.
      *
      * @param latitude The latitude for which to return the value.
-     * @return The distance (in meters) spanned by a single pixel.
+     * @return The distance measured in meters.
      */
     public double getMetersPerPixelAtLatitude(double latitude) {
         return mNativeMapView.getMetersPerPixelAtLatitude(latitude, getZoomLevel());
@@ -1702,7 +1743,6 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
     }
 
     private void selectAnnotation(Annotation annotation) {
-
         if (annotation == null) {
             return;
         }
@@ -1748,7 +1788,6 @@ public final class MapView extends FrameLayout implements LocationListener, Comp
             }
         }
     }
-
 
     //
     // Rendering
