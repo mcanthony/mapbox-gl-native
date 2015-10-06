@@ -119,6 +119,7 @@
           'xcode_settings': {
             'OTHER_CPLUSPLUSFLAGS': [ '<@(cflags_cc)' ],
             'OTHER_LDFLAGS': [ '<@(ldflags)' ],
+            'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES'
           },
         }, {
          'cflags_cc': [ '<@(cflags_cc)' ],
