@@ -12,7 +12,7 @@
           'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
           'GCC_ENABLE_CPP_RTTI': 'YES',
           'OTHER_CPLUSPLUSFLAGS': [
-            '-std=c++1y',
+            '-std=c++14',
             '-Werror',
             '-Wall',
             '-Wextra',
@@ -96,7 +96,7 @@
           'GCC_OPTIMIZATION_LEVEL': '3',
           'GCC_GENERATE_DEBUGGING_SYMBOLS': 'YES',
           'DEAD_CODE_STRIPPING': 'NO',
-          'GCC_INLINES_ARE_PRIVATE_EXTERN': 'NO'
+          'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES'
         }
       },
     },
