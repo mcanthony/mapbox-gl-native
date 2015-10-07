@@ -14,13 +14,17 @@ struct GeometryTooLongException : std::exception {};
 
 using namespace mbgl;
 
-template <> struct mapbox::util::nth<0, Coordinate> {
+namespace mapbox {
+namespace util {
+template <> struct nth<0, Coordinate> {
     inline static int64_t get(const Coordinate& t) { return t.x; };
 };
 
-template <> struct mapbox::util::nth<1, Coordinate> {
+template <> struct nth<1, Coordinate> {
     inline static int64_t get(const Coordinate& t) { return t.y; };
 };
+}
+}
 
 using Ring = std::vector<Coordinate>;
 
